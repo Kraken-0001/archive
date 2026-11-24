@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#6b4a2b">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="أرشيف عبود">
+<title>أرشيف عبود شوكة</title>
+<style>
+:root{color-scheme:light;--paper:#fbf6ea;--ink:#2b2118;--brown:#6b4a2b;--line:#e2d6bd;--in:#1f6b3a;--out:#b3261e;--card:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:20px/1.5 "Segoe UI",Tahoma,Arial,sans-serif;padding-bottom:40px}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+header{background:var(--brown);color:#fff;padding:18px 16px;text-align:center}
+header h1{margin:0;font-size:30px}
+header p{margin:2px 0 0;opacity:.85;font-size:16px}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
+button{font:inherit;cursor:pointer;color:var(--ink)}
+.chart{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px 12px;margin:14px 0}
+.chart h2{margin:0 0 8px;font-size:20px}
+.bars{display:flex;align-items:flex-end;justify-content:space-around;gap:6px;height:170px;border-bottom:2px solid var(--line)}
+.grp{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.pair{display:flex;align-items:flex-end;gap:3px;height:100%;width:100%;justify-content:center}
+.bar{width:42%;max-width:26px;border-radius:6px 6px 0 0;min-height:2px}
+.bar.i{background:var(--in)}.bar.o{background:var(--out)}
+.labels{display:flex;justify-content:space-around;gap:6px;margin-top:6px;font-size:14px;color:#7a6a58}
+.labels span{flex:1;text-align:center}
+.legend{display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:16px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:middle;margin-inline-end:6px}
+.bigbtn{border:0;border-radius:16px;padding:22px 8px;font-size:26px;font-weight:800;color:#fff}
+.bigbtn small{display:block;font-size:15px;font-weight:400;opacity:.9}
+.b-in{background:var(--in)}.b-out{background:var(--out)}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:16px;margin:14px 0}
+.card h2{margin:0 0 10px;font-size:22px}
+label{display:block;font-weight:700;margin:12px 0 4px}
+input{width:100%;font:inherit;font-size:22px;padding:12px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+.go{width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font-size:24px;font-weight:800;color:#fff}
+.cancel{width:100%;margin-top:8px;border:2px solid var(--line);background:#fff;border-radius:14px;padding:12px;font-size:20px}
+.month{background:var(--card);border:2px solid var(--line);border-radius:16px;margin:14px 0;overflow:hidden}
+.mh{padding:14px 16px;background:#f3ead5;border-bottom:2px solid var(--line)}
+.mh b{font-size:22px}
+.row{display:flex;justify-content:space-between;gap:8px;padding:4px 0}
+.net{font-size:24px;font-weight:800;margin-top:6px}
+.good{color:var(--in)}.bad{color:var(--out)}
+.ent{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.ent:last-child{border-bottom:0}
+.ent small{display:block;color:#7a6a58;font-size:15px}
+.amt{font-weight:800;white-space:nowrap;font-size:21px}
+.x{border:2px solid var(--line);background:#fff;border-radius:10px;padding:6px 12px;font-size:16px;color:var(--out)}
+.total{background:var(--brown);color:#fff;border-radius:16px;padding:16px;margin:14px 0;text-align:center}
+.total .n{font-size:32px;font-weight:800}
+.total.bad2{background:var(--out)}.total.good2{background:var(--in)}
+.empty{text-align:center;color:#7a6a58;padding:24px}
+.tools{display:flex;gap:8px;margin-top:20px}
+.tools button{flex:1;border:2px solid var(--line);background:#fff;border-radius:12px;padding:12px;font-size:17px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2b2118;color:#fff;padding:12px 20px;border-radius:12px;font-size:18px;z-index:9}
+footer{text-align:center;color:#7a6a58;font-size:15px;margin-top:24px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><h1>أرشيف عبود شوكة</h1><p>دفتر الدكان: اللي قبضته واللي دفعته</p></header>
+<div class="wrap" id="app"></div>
+<script>
+(function(){
+"use strict";
+var KEY="aryaf-archive-v1", TZ="Asia/Amman";
+function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4)}
+function h(tag,props){var e=document.createElement(tag),k;props=props||{};for(k in props){if(k==="class")e.className=props[k];else if(k==="text")e.textContent=props[k];else if(k.slice(0,2)==="on")e.addEventListener(k.slice(2),props[k]);else e.setAttribute(k,props[k]);}for(var i=2;i<arguments.length;i++){var c=arguments[i];if(Array.isArray(c))c.forEach(function(x){if(x)e.append(x)});else if(c!=null&&c!==false)e.append(c.nodeType?c:document.createTextNode(c));}return e}
+function parseNum(s){s=String(s||"").replace(/[٠-٩]/g,function(d){return "٠١٢٣٤٥٦٧٨٩".indexOf(d)}).replace(/[٫,]/g,".").replace(/[^\d.]/g,"");var n=parseFloat(s);return isFinite(n)&&n>=0?n:0}
+function money(n){return (Math.round(n*100)/100).toLocaleString("en-US",{maximumFractionDigits:2})+" د"}
+function today(){return new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(Date.now())}
+var S;
+function clean(v){v=v&&typeof v==="object"?v:{};return{e:(Array.isArray(v.e)?v.e.slice(0,20000):[]).map(function(o){o=o||{};return{id:String(o.id||uid()),d:/^\d{4}-\d{2}-\d{2}$/.test(o.d)?o.d:today(),t:o.t==="out"?"out":"in",a:Math.max(0,Number(o.a)||0),n:String(o.n||"").slice(0,80)}})}}
+try{S=clean(JSON.parse(localStorage.getItem(KEY)))}catch(e){S=clean(null)}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast("ما قدرت أحفظ")}}
+var tt;function toast(m){var o=document.querySelector(".toast");if(o)o.remove();var t=h("div",{class:"toast",text:m});document.body.appendChild(t);clearTimeout(tt);tt=setTimeout(function(){t.remove()},2200)}
+var mode=null,app=document.getElementById("app");
+function form(type){
+  var isIn=type==="in";
+  var d=h("input",{type:"date","aria-label":"التاريخ"});d.value=today();
+  var a=h("input",{type:"text",inputmode:"decimal",autocomplete:"off",placeholder:"0","aria-label":"المبلغ"});
+  var n=h("input",{type:"text",autocomplete:"off",placeholder:isIn?"مثلاً: بيع محل الأمل":"مثلاً: شراء زيتون",maxlength:"80","aria-label":"ملاحظة"});
+  var f=h("form",{class:"card",novalidate:""},
+    h("h2",{text:isIn?"قبضت":"دفعت"}),
+    h("label",{text:"التاريخ"}),d,h("label",{text:"المبلغ (دينار)"}),a,h("label",{text:"ملاحظة (اختياري)"}),n,
+    h("button",{class:"go "+(isIn?"b-in":"b-out"),type:"submit",text:"حفظ"}),
+    h("button",{class:"cancel",type:"button",text:"إلغاء",onclick:function(){mode=null;render()}}));
+  f.addEventListener("submit",function(e){e.preventDefault();var v=parseNum(a.value);if(!(v>0)){toast("اكتب المبلغ");a.focus();return}
+    S.e.push({id:uid(),d:d.value||today(),t:type,a:v,n:n.value.trim().slice(0,80)});save();mode=null;render();toast("انحفظ")});
+  return f;
+}
+function render(){
+  app.textContent="";
+  if(mode){app.appendChild(form(mode));setTimeout(function(){var i=app.querySelector("input[inputmode]");if(i)i.focus()},50);return}
+  app.appendChild(h("div",{class:"big"},
+    h("button",{class:"bigbtn b-in",type:"button",onclick:function(){mode="in";render()}},"قبضت",h("small",{text:"بيع أو مبلغ إجا"})),
+    h("button",{class:"bigbtn b-out",type:"button",onclick:function(){mode="out";render()}},"دفعت",h("small",{text:"شراء أو مصروف"}))));
+  var by={},tin=0,tout=0;
+  S.e.forEach(function(x){var m=x.d.slice(0,7);by[m]=by[m]||[];by[m].push(x);if(x.t==="in")tin+=x.a;else tout+=x.a});
+  var ms=Object.keys(by).sort().reverse();
+  if(!ms.length)app.appendChild(h("div",{class:"empty",text:"الدفتر فاضي. اضغط قبضت أو دفعت وسجّل أول بند."}));
+  else{
+    var tn=tin-tout;
+    app.appendChild(h("div",{class:"total "+(tn<0?"bad2":"good2")},h("div",{text:"المجموع الكلي"}),h("div",{class:"n",text:(tn<0?"خسران ":"ربحان ")+money(Math.abs(tn))}),h("div",{text:"قبضت "+money(tin)+" · دفعت "+money(tout)})));
+  }
+  if(ms.length){
+    var last=ms.slice(0,6).reverse(),mx=1,sums=last.map(function(m){var i=0,o=0;by[m].forEach(function(x){if(x.t==="in")i+=x.a;else o+=x.a});mx=Math.max(mx,i,o);return{m:m,i:i,o:o}});
+    var bars=h("div",{class:"bars"}),labs=h("div",{class:"labels"});
+    sums.forEach(function(x){bars.appendChild(h("div",{class:"grp"},h("div",{class:"pair"},h("div",{class:"bar i",style:"height:"+Math.round(x.i/mx*100)+"%",title:money(x.i)}),h("div",{class:"bar o",style:"height:"+Math.round(x.o/mx*100)+"%",title:money(x.o)}))));labs.appendChild(h("span",{text:x.m.slice(2)}))});
+    app.appendChild(h("div",{class:"chart"},h("h2",{text:"قبضت ودفعت بكل شهر"}),bars,labs,h("div",{class:"legend"},h("span",{},h("i",{style:"background:#1f6b3a"}),"قبضت"),h("span",{},h("i",{style:"background:#b3261e"}),"دفعت"))));
+    var nb=h("div",{class:"bars"}),nl=h("div",{class:"labels"}),nmx=1;
+    sums.forEach(function(x){nmx=Math.max(nmx,Math.abs(x.i-x.o))});
+    sums.forEach(function(x){var n=x.i-x.o;nb.appendChild(h("div",{class:"grp"},h("div",{class:"pair"},h("div",{class:"bar "+(n<0?"o":"i"),style:"height:"+Math.round(Math.abs(n)/nmx*100)+"%",title:money(n)}))));nl.appendChild(h("span",{text:(n<0?"-":"")+Math.round(Math.abs(n))}))});
+    app.appendChild(h("div",{class:"chart"},h("h2",{text:"الصافي (أخضر ربح، أحمر خسارة)"}),nb,nl));
+  }
+  ms.forEach(function(m){
+    var li=0,lo=0;by[m].forEach(function(x){if(x.t==="in")li+=x.a;else lo+=x.a});var net=li-lo;
+    var box=h("div",{class:"month"},h("div",{class:"mh"},h("b",{text:m}),
+      h("div",{class:"row"},h("span",{text:"قبضت"}),h("span",{class:"good",text:money(li)})),
+      h("div",{class:"row"},h("span",{text:"دفعت"}),h("span",{class:"bad",text:money(lo)})),
+      h("div",{class:"net "+(net<0?"bad":"good"),text:(net<0?"خسران ":"ربحان ")+money(Math.abs(net))})));
+    by[m].sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0}).forEach(function(x){
+      var ask=false;var del=h("button",{class:"x",type:"button",text:"حذف"});
+      del.addEventListener("click",function(){if(!ask){ask=true;del.textContent="متأكد؟ اضغط ثانية";return}S.e=S.e.filter(function(y){return y!==x});save();render();toast("انحذف")});
+      box.appendChild(h("div",{class:"ent"},h("div",{},(x.t==="in"?"قبضت":"دفعت")+(x.n?" · "+x.n:""),h("small",{text:x.d})),h("div",{style:"text-align:left"},h("div",{class:"amt "+(x.t==="in"?"good":"bad"),text:(x.t==="in"?"+":"−")+money(x.a)}),del)));
+    });
+    app.appendChild(box);
+  });
+  var imp=h("input",{type:"file",accept:"application/json,.json",hidden:""});
+  imp.addEventListener("change",function(){var f=imp.files&&imp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(!d||d.app!=="aryaf-archive")throw 0;S=clean(d.data);save();render();toast("انستوردت النسخة")}catch(e){toast("الملف مش صحيح")}};r.readAsText(f)});
+  app.appendChild(h("div",{class:"tools"},
+    h("button",{type:"button",text:"حفظ نسخة",onclick:function(){var b=new Blob([JSON.stringify({app:"aryaf-archive",data:S})],{type:"application/json"});var u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="archive-backup-"+today()+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);toast("نزّلت النسخة")}}),
+    h("button",{type:"button",text:"استيراد نسخة",onclick:function(){imp.click()}}),imp));
+  app.appendChild(h("footer",{},"تصميم طارق"));
+}
+render();
+if("serviceWorker" in navigator){var had=!!navigator.serviceWorker.controller,rl=false;navigator.serviceWorker.addEventListener("controllerchange",function(){if(had&&!rl){rl=true;location.reload()}});window.addEventListener("load",function(){navigator.serviceWorker.register("service-worker.js").catch(function(){})})}
+})();
+</script>
+</body>
+</html>
